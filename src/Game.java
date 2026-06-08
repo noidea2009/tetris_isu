@@ -59,7 +59,25 @@ public class Game {
     public boolean isHoldUsed()                 { return holdUsed; }
     public void setQueuePanel(NextQueuePanel qp) { this.queuePanel = qp; }
 
-    // ── NEW: signature now accepts the exit callback ──────────────────────────
+                // Extract values as Strings, then parse to int
+                loadedDas = Integer.parseInt(doc.getElementsByTagName("DAS").item(0).getTextContent());
+                loadedArr = Integer.parseInt(doc.getElementsByTagName("ARR").item(0).getTextContent());
+                loadedVol = Integer.parseInt(doc.getElementsByTagName("Volume").item(0).getTextContent());
+
+                System.out.println("Configuration loaded successfully.");
+            } else {
+                System.out.println("config.xml not found, using defaults.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error reading config.xml, using defaults: " + e.getMessage());
+        }
+
+        // Apply the loaded (or default) values to the static Options class
+        //may need to add setters in Options.java for this
+        Options.setDAS(loadedDas);
+        Options.setARR(loadedArr);
+        Options.setVolume(loadedVol);
+    }
     void start(GamePanel gamePanel, Runnable onExit) {
         this.gamePanel = gamePanel;
         this.onExit    = onExit;
@@ -77,7 +95,7 @@ public class Game {
     }
 
     void resetGame() {
-        // ── NEW: pull latest DAS/ARR from Options each new game ──────────────
+        loadSettingsFromXml();
         DAS_DELAY = Options.getDAS();
         ARR_RATE  = Options.getARR();
 

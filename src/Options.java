@@ -12,7 +12,9 @@ public class Options extends JPanel {
     public static int getDAS()    { return das; }
     public static int getARR()    { return arr; }
     public static int getVolume() { return volume; }
-
+    public static void setDAS(int val)    { das = val; }
+    public static void setARR(int val)    { arr = val; }
+    public static void setVolume(int val) { volume = val; }
     public Options(Runnable onBack) {
         setBackground(Color.BLACK);
         setLayout(new GridBagLayout());
@@ -39,6 +41,18 @@ public class Options extends JPanel {
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
         add(back, gbc);
+        // Save button
+        JButton saveButton = styledButton("SAVE");
+        saveButton.addActionListener(e -> saveSettingsToXml());
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        buttonPanel.setBackground(Color.BLACK);
+        buttonPanel.add(saveButton);
+        buttonPanel.add(back); // Assuming 'back' is already defined
+
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        add(buttonPanel, gbc);
     }
 
     private void addSliderRow(String label, int initial, int min, int max,

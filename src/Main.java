@@ -70,6 +70,7 @@ public class Main {
         if (game != null) game.stop();
 
         // Remove stale GAME card to avoid duplicates in CardLayout
+        // this happened last week so I needed to add this
         if (gameWrapper != null) {
             root.remove(gameWrapper);
             gameWrapper = null;
