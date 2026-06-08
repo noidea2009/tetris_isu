@@ -29,7 +29,6 @@ public class Main {
         cardLayout.show(root, "MENU");
     }
 
-    // ── Menu ──────────────────────────────────────────────────────────────────
 
     private static JPanel buildMenu() {
         JPanel panel = new JPanel(new GridBagLayout());
@@ -108,7 +107,6 @@ public class Main {
         game.start(gamePanel, () -> SwingUtilities.invokeLater(() -> showCard("MENU")));
     }
 
-    // ── Navigation ────────────────────────────────────────────────────────────
 
     private static void showCard(String name) {
         if ("MENU".equals(name) && game != null) game.stop();
@@ -116,7 +114,6 @@ public class Main {
         root.repaint();
     }
 
-    // ── Shared style ──────────────────────────────────────────────────────────
 
     private static JButton menuButton(String text) {
         JButton btn = new JButton(text);

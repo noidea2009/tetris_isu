@@ -1,7 +1,12 @@
 import javax.swing.*;
 import java.awt.*;
 import java.util.function.IntConsumer;
-
+import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.w3c.dom.*;
+import java.io.File;
 public class Options extends JPanel {
 
     // Static settings — Game.java reads these on resetGame()
@@ -64,7 +69,6 @@ public class Options extends JPanel {
         gbc.anchor = GridBagConstraints.EAST;
         add(styledLabel(label, 14), gbc);
 
-        // Value readout
         JLabel valueLabel = new JLabel(String.valueOf(initial));
         valueLabel.setForeground(Color.LIGHT_GRAY);
         valueLabel.setFont(new Font("Monospaced", Font.PLAIN, 14));
@@ -93,7 +97,6 @@ public class Options extends JPanel {
         add(row_panel, gbc);
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private static JLabel styledLabel(String text, int size) {
         JLabel lbl = new JLabel(text, SwingConstants.CENTER);
@@ -110,5 +113,45 @@ public class Options extends JPanel {
         btn.setFocusPainted(false);
         btn.setPreferredSize(new Dimension(160, 44));
         return btn;
+    }
+    private void saveSettingsToXml() {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.newDocument();
+
+            // Create XML structure
+            Element root = doc.createElement("DataConfiguration");
+            doc.appendChild(root);
+
+            Element params = doc.createElement("Parameters");
+            root.appendChild(params);
+
+            // Add variables
+            createElement(doc, params, "DAS", String.valueOf(das));
+            createElement(doc, params, "ARR", String.valueOf(arr));
+            createElement(doc, params, "Volume", String.valueOf(volume));
+
+            // Write to file
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(new File("config.xml"));
+            transformer.transform(source, result);
+
+            JOptionPane.showMessageDialog(this, "Settings Saved Successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error saving settings: " + e.getMessage());
+        }
+    }
+
+    // Helper to keep code clean
+    private void createElement(Document doc, Element parent, String tag, String value) {
+        Element e = doc.createElement(tag);
+        e.appendChild(doc.createTextNode(value));
+        parent.appendChild(e);
     }
 }

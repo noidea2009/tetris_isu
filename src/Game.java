@@ -14,7 +14,6 @@ public class Game {
     private GamePanel gamePanel;
     private javax.swing.Timer gameTimer;
 
-    // ── NEW: exit callback (set by Main, called on ESC) ──────────────────────
     private Runnable onExit;
 
     // button flags
@@ -61,6 +60,19 @@ public class Game {
     public int  getHoldType()                   { return holdType; }
     public boolean isHoldUsed()                 { return holdUsed; }
     public void setQueuePanel(NextQueuePanel qp) { this.queuePanel = qp; }
+    private void loadSettingsFromXml() {
+        // Default values
+        int loadedDas = 160;
+        int loadedArr = 30;
+        int loadedVol = 50;
+
+        try {
+            File xmlFile = new File("config.xml");
+            if (xmlFile.exists()) {
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                Document doc = builder.parse(xmlFile);
+                doc.getDocumentElement().normalize();
 
                 // Extract values as Strings, then parse to int
                 loadedDas = Integer.parseInt(doc.getElementsByTagName("DAS").item(0).getTextContent());
@@ -91,7 +103,6 @@ public class Game {
         gameTimer.start();
     }
 
-    // ── NEW: clean shutdown called by Main when navigating away ──────────────
     void stop() {
         isRunning = false;
         if (gameTimer != null) gameTimer.stop();
