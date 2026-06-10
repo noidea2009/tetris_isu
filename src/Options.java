@@ -21,7 +21,7 @@ public class Options extends JPanel {
     public static void setARR(int val)    { arr = val; }
     public static void setVolume(int val) { volume = val; }
     public Options(Runnable onBack) {
-        setBackground(Color.BLACK);
+        setOpaque(false);
         setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();

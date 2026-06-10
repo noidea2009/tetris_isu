@@ -1,25 +1,28 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 public class Main {
 
-    private static JFrame     frame;
-    private static CardLayout cardLayout;
-    private static JPanel     root;
+    private static final String BG_FILE = "tetris miku.jpg";
 
-    // Game state — recreated each Play press
-    private static Game    game;
-    private static JPanel  gameWrapper; // tracked so we can remove it before re-adding
+    private static JFrame          frame;
+    private static CardLayout      cardLayout;
+    private static BackgroundPanel root;
+
+    private static Game   game;
+    private static JPanel gameWrapper;
 
     public static void main(String[] args) {
-        frame     = new JFrame("Tetris");
+        frame      = new JFrame("Tetris");
         cardLayout = new CardLayout();
-        root       = new JPanel(cardLayout);
-        root.setBackground(Color.BLACK);
+        root       = new BackgroundPanel(BG_FILE, cardLayout);
 
         root.add(buildMenu(), "MENU");
         root.add(new Options(() -> showCard("MENU")), "OPTIONS");
-        // "GAME" card is built dynamically in startGame()
 
         frame.add(root);
         frame.setSize(600, 700);
@@ -30,9 +33,38 @@ public class Main {
     }
 
 
+    //  Child panels must call setOpaque(false) to let the image show through.
+    static class BackgroundPanel extends JPanel {
+        private final BufferedImage bg;
+
+        BackgroundPanel(String filename, LayoutManager layout) {
+            super(layout);
+            setBackground(Color.BLACK); // fallback if image missing or window larger than image
+            BufferedImage loaded = null;
+            try {
+                loaded = ImageIO.read(new File(filename));
+            } catch (IOException e) {
+                System.err.println("[BackgroundPanel] Could not load '" + filename + "': " + e.getMessage());
+            }
+            bg = loaded;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g); // fills with background color first
+            if (bg == null) return;
+            // Center image at its native size — no resize, no distortion
+            int x = (getWidth()  - bg.getWidth())  / 2;
+            int y = (getHeight() - bg.getHeight()) / 2;
+            g.drawImage(bg, x, y, null);
+        }
+    }
+
+
     private static JPanel buildMenu() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.BLACK);
+        panel.setOpaque(false); // ← lets BackgroundPanel show through
+        // panel.setBackground(Color.BLACK); // remove or comment out
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(14, 0, 14, 0);
@@ -63,13 +95,8 @@ public class Main {
         return panel;
     }
 
-
     private static void startGame() {
-        // Stop previous session cleanly
         if (game != null) game.stop();
-
-        // Remove stale GAME card to avoid duplicates in CardLayout
-        // this happened last week so I needed to add this
         if (gameWrapper != null) {
             root.remove(gameWrapper);
             gameWrapper = null;
@@ -84,7 +111,7 @@ public class Main {
         game.setQueuePanel(queuePanel);
 
         gameWrapper = new JPanel(new GridBagLayout());
-        gameWrapper.setBackground(Color.BLACK);
+        gameWrapper.setOpaque(false); // ← lets BackgroundPanel show through
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridy  = 0;
@@ -103,17 +130,14 @@ public class Main {
         showCard("GAME");
         gamePanel.requestFocusInWindow();
 
-        // ESC in-game calls this lambda → returns to menu on the EDT
         game.start(gamePanel, () -> SwingUtilities.invokeLater(() -> showCard("MENU")));
     }
-
 
     private static void showCard(String name) {
         if ("MENU".equals(name) && game != null) game.stop();
         cardLayout.show(root, name);
         root.repaint();
     }
-
 
     private static JButton menuButton(String text) {
         JButton btn = new JButton(text);
