@@ -30,8 +30,8 @@ public class GamePanel extends JPanel {
     public GamePanel(Game game) {
         this.game = game;
         setFocusable(true);
-        // Requesting focus here can sometimes fail if the component isn't on screen yet.
-        // It's best to call requestFocusInWindow() after the frame is visible, but we'll keep it.
+        // Requesting focus can sometimes fail if the component isn't on screen yet depends on OS, sometimes it doesnt work for mac machines thats all I know.
+        // It's best to call requestFocusInWindow() after the frame is visible
         requestFocusInWindow();
 
         // This explicitly tells layout managers exactly how big the board area needs to be
@@ -113,9 +113,11 @@ public class GamePanel extends JPanel {
      */
     private BufferedImage scaleImage(BufferedImage original, int width, int height) {
         BufferedImage scaled = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        //Graphics2D used here to scale grahics, else it will be really messy
         Graphics2D g2d = scaled.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2d.drawImage(original, 0, 0, width, height, null);
+        //dispose because memory, else it will crash pretty fast
         g2d.dispose();
         return scaled;
     }
@@ -125,7 +127,7 @@ public class GamePanel extends JPanel {
         // Clear the screen and handle standard Swing background painting automatically
         super.paintComponent(g);
 
-        // without risking flicker, removing the buggy off-screen buffer logic.
+        // without risking flicker, removed the buggy off-screen buffer logic.
         drawGrid(g);
         drawLockedPieces(g);
         drawGhostPiece(g);
@@ -220,9 +222,12 @@ public class GamePanel extends JPanel {
         
         // Use sprite with transparency if available
         if (pieceSprites != null && pieceType >= 0 && pieceType < pieceSprites.length) {
+            //Graphics2D is used to control image opacity
             Graphics2D g2d = (Graphics2D) g.create();
+            //opacity
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
             g2d.drawImage(pieceSprites[pieceType], px, py, null);
+            //dispose becuase memory
             g2d.dispose();
         } else {
             // Fallback to semi-transparent gray
