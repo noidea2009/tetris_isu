@@ -12,7 +12,7 @@ public class Options extends JPanel {
     // Static settings — Game.java reads these on resetGame()
     private static int das    = 119;
     private static int arr    = 16;
-    private static int volume = 50;  // placeholder; wire to audio system when added
+    private static int volume = 50;  // placeholder, wire to audio system when added
 
     public static int getDAS()    { return das; }
     public static int getARR()    { return arr; }

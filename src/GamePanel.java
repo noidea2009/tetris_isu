@@ -43,7 +43,7 @@ public class GamePanel extends JPanel {
     }
     
     /**
-     * Load and crop mino sprites from tetrio.2x.png
+     * Load and crop mino sprites from image
      * Sprite layout: I, T, L, J, Z, S, O (left to right)
      * Each block is 48x48 with 1px padding
      */

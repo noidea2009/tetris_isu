@@ -52,6 +52,9 @@ public class NextQueuePanel extends JPanel {
 
     /**
      * Scale a BufferedImage to the specified dimensions
+     * @param original the original photo of mino blocks itself
+     * @param width width to scale to
+     * @param height height to scale to
      */
     private BufferedImage scaleImage(BufferedImage original, int width, int height) {
         BufferedImage scaled = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -69,6 +72,9 @@ public class NextQueuePanel extends JPanel {
         setBackground(Color.BLACK);
     }
 
+    /**
+     *paintComponent of NextQueuePanel, called every 16ms
+     **/
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);

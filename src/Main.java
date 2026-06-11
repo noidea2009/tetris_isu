@@ -33,7 +33,7 @@ public class Main {
     }
 
 
-    //  Child panels must call setOpaque(false) to let the image show through.
+    // Child panels must call setOpaque(false) to let the image show through.
     static class BackgroundPanel extends JPanel {
         private final BufferedImage bg;
 
@@ -63,8 +63,8 @@ public class Main {
 
     private static JPanel buildMenu() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false); // ← lets BackgroundPanel show through
-        // panel.setBackground(Color.BLACK); // remove or comment out
+        panel.setOpaque(false); // lets BackgroundPanel show through
+        // panel.setBackground(Color.BLACK); // comment out
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(14, 0, 14, 0);
@@ -111,7 +111,7 @@ public class Main {
         game.setQueuePanel(queuePanel);
 
         gameWrapper = new JPanel(new GridBagLayout());
-        gameWrapper.setOpaque(false); // ← lets BackgroundPanel show through
+        gameWrapper.setOpaque(false); // lets BackgroundPanel show through
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridy  = 0;

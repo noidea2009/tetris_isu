@@ -106,7 +106,7 @@ public final class PieceData {
             return new int[][] { {0, 0} };
         }
 
-        // --- Detect 180-degree rotation ---
+        // 180 spin
         int diff = Math.abs(fromRot - toRot);
         if (diff == 2) {
             int[][][] table180 = (type == 0) ? KICKS_180_I : KICKS_180_JLSTZ;
@@ -122,7 +122,7 @@ public final class PieceData {
             return adjustedKicks;
         }
 
-        // --- Fallback to standard 90-degree offset calculation ---
+        // Fallback to standard 90-degree offset calculation
         int[][][] table = (type == 0) ? OFFSETS_I : OFFSETS_JLSTZ;
         int count = table[0].length;
         int[][] kicks = new int[count][2];

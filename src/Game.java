@@ -99,6 +99,7 @@ public class Game {
         input = new InputHandler();
         input.getinputfromkeyboard(gamePanel);
         resetGame();
+        //java swing timer and triggers update in 60 fps
         gameTimer = new Timer(16, e -> update());
         gameTimer.start();
     }
@@ -107,7 +108,7 @@ public class Game {
         isRunning = false;
         if (gameTimer != null) gameTimer.stop();
     }
-
+    // reloads the game and enforeces a check on the config file
     void resetGame() {
         loadSettingsFromXml();
         DAS_DELAY = Options.getDAS();
@@ -121,7 +122,7 @@ public class Game {
         spawnPiece();
         isRunning = true;
     }
-
+    // shuffles new pieces into queue if less than 14
     void refillBag() {
         while (bag.size() < 14) {
             List<Integer> newBag = new ArrayList<>();
@@ -135,6 +136,7 @@ public class Game {
         return bag.subList(0, Math.min(count, bag.size()));
     }
 
+    //checks the time and apply das and arr, spin detection is also partially enforced here.
     void handleInput() {
         long now = System.nanoTime() / 1_000_000;
 
@@ -234,7 +236,6 @@ public class Game {
         }
     }
 
-    // Inside Game.java
 
     int detectSpin(Piece piece) {
         if (!lastActionWasRotation) return SPIN_NONE;
@@ -244,21 +245,20 @@ public class Game {
         int py = piece.getY();
         int[][] shape = piece.getShape();
 
-        // 1. TETR.IO Immobility Check: Can the piece move left, right, or up?
+        // TETR.IO Immobility Check: Can the piece move left, right, or up
         boolean canMoveLeft  = !board.isCollision(shape, px - 1, py);
         boolean canMoveRight = !board.isCollision(shape, px + 1, py);
         boolean canMoveUp    = !board.isCollision(shape, px, py - 1);
         boolean isImmobile   = !canMoveLeft && !canMoveRight && !canMoveUp;
 
-        // --- ALL-SPINS FOR NON-T-PIECES ---
-        // In TETR.IO, any non-T piece that is completely immobile upon rotation
+        //  ALL-SPINS FOR NON-T-PIECES
         // satisfies an All-Spin. These are scored as MINIs.
         if (type != 1) {
             return isImmobile ? SPIN_MINI : SPIN_NONE;
         }
 
-        // --- T-PIECE SPIN DETECTION ---
-        // 2. The 3-Corner Rule (T-piece matrix centers around offset [1,1])
+        //  T-PIECE SPIN DETECTION
+        //  The 3-Corner Rule (T-piece matrix centers around offset [1,1])
         boolean tl = isOccupied(px + 0, py + 0); // Top-Left
         boolean tr = isOccupied(px + 2, py + 0); // Top-Right
         boolean bl = isOccupied(px + 0, py + 2); // Bottom-Left
@@ -269,7 +269,7 @@ public class Game {
         // If fewer than 3 corners are filled, it cannot be any type of T-Spin
         if (filledCorners < 3) return SPIN_NONE;
 
-        // 3. Kick Upgrade Exception:
+        // Kick Upgrade Exception:
         // If the rotation utilized the 5th SRS kick test (index 4), it's automatically a FULL T-Spin
         if (piece.getLastUsedKickIndex() == 4) {
             return SPIN_FULL;
@@ -309,7 +309,7 @@ public class Game {
     }
 
 
-
+    //hold logic to save held block
     void hold() {
         if (holdUsed) return;
         holdUsed = true;
@@ -326,14 +326,14 @@ public class Game {
         lockTimestamp = 0;
         pendingSpin   = SPIN_NONE;
     }
-
+    // instantly drops to furthest y position
     void hardDrop() {
         while (currentPiece.tryMove(0, 1, board));
         lockTimestamp  = 0;
         lockResetCount = 0;
         lockPiece();
     }
-
+    // locks the piece into the board, and spawns in the next piece
     void lockPiece() {
         lastSpin = pendingSpin;
         if      (lastSpin == SPIN_MINI) System.out.println("\n[!] MINI SPIN (type " + currentPiece.getType() + ")");
@@ -353,14 +353,16 @@ public class Game {
         if (bag.size() < 7) refillBag();
         if (board.isCollision(currentPiece)) isRunning = false;
     }
-
+    //gravity component
     void applyGravity() {
+        //checks interval
         long now = System.nanoTime() / 1_000_000;
         if (now - lastFallTime < GRAVITY_INTERVAL) return;
         lastFallTime = now;
-
+        //moves the mino
         boolean moved = currentPiece.tryMove(0, 1, board);
         if (!moved) {
+            //lock delay logic
             if (lockTimestamp == 0) {
                 lockTimestamp = now;
             } else if (now - lockTimestamp >= LOCK_DELAY || lockResetCount >= MAX_LOCK_RESETS) {
