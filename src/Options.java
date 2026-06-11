@@ -20,6 +20,9 @@ public class Options extends JPanel {
     public static void setDAS(int val)    { das = val; }
     public static void setARR(int val)    { arr = val; }
     public static void setVolume(int val) { volume = val; }
+    private static int sdf = 50; // ms per cell; lower = faster
+    public static int getSDF()        { return sdf; }
+    public static void setSDF(int v)  { sdf = v; }
     public Options(Runnable onBack) {
         setOpaque(false);
         setLayout(new GridBagLayout());
@@ -37,26 +40,25 @@ public class Options extends JPanel {
         // Sliders
         addSliderRow("DAS (ms)",  das,    0, 300, gbc, 1, v -> das    = v);
         addSliderRow("ARR (ms)",  arr,    0, 100, gbc, 2, v -> arr    = v);
-        addSliderRow("Volume",    volume, 0, 100, gbc, 3, v -> volume = v);
+        addSliderRow("SDF (ms)", sdf, 0, 200, gbc, 3, v -> sdf = v);
+        addSliderRow("Volume",    volume, 0, 100, gbc, 4, v -> volume = v);
 
         // Back button
         JButton back = styledButton("BACK");
         back.addActionListener(e -> onBack.run());
-        gbc.gridy = 4; gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        add(back, gbc);
-        // Save button
+
         JButton saveButton = styledButton("SAVE");
         saveButton.addActionListener(e -> saveSettingsToXml());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         buttonPanel.setBackground(Color.BLACK);
         buttonPanel.add(saveButton);
-        buttonPanel.add(back); // Assuming 'back' is already defined
+        buttonPanel.add(back);
 
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
         add(buttonPanel, gbc);
     }
 
@@ -130,6 +132,7 @@ public class Options extends JPanel {
             // Add variables
             createElement(doc, params, "DAS", String.valueOf(das));
             createElement(doc, params, "ARR", String.valueOf(arr));
+            createElement(doc, params, "SDF", String.valueOf(sdf));
             createElement(doc, params, "Volume", String.valueOf(volume));
 
             // Write to file

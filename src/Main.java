@@ -32,7 +32,7 @@ public class Main {
         cardLayout.show(root, "MENU");
     }
 
-
+    // subclass here becuase it is eaiser to manage
     // Child panels must call setOpaque(false) to let the image show through.
     static class BackgroundPanel extends JPanel {
         private final BufferedImage bg;

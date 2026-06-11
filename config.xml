@@ -3,6 +3,7 @@
     <Parameters>
         <DAS>119</DAS>
         <ARR>16</ARR>
+        <SDF>0</SDF>
         <Volume>50</Volume>
     </Parameters>
 </DataConfiguration>

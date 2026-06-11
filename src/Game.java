@@ -34,12 +34,13 @@ public class Game {
     // 7-bag
     private List<Integer> bag;
 
-    // DAS/ARR — read from Options on each resetGame()
+    // DAS/ARR/SDF— read from Options on each resetGame()
     private long dasTimestamp;
     private long arrTimestamp;
     private int  DAS_DELAY = 119;
     private int  ARR_RATE  = 16;
-
+    private long softDropTimestamp = 0;
+    private int  SOFT_DROP_INTERVAL = 50;
     // Gravity / lock
     private long lockTimestamp              = 0;
     private static final int LOCK_DELAY     = 500;
@@ -64,6 +65,7 @@ public class Game {
         // Default values
         int loadedDas = 160;
         int loadedArr = 30;
+        int loadedSdf = 50;
         int loadedVol = 50;
 
         try {
@@ -78,6 +80,8 @@ public class Game {
                 loadedDas = Integer.parseInt(doc.getElementsByTagName("DAS").item(0).getTextContent());
                 loadedArr = Integer.parseInt(doc.getElementsByTagName("ARR").item(0).getTextContent());
                 loadedVol = Integer.parseInt(doc.getElementsByTagName("Volume").item(0).getTextContent());
+                loadedSdf = Integer.parseInt(doc.getElementsByTagName("SDF").item(0).getTextContent());
+
 
                 System.out.println("Configuration loaded successfully.");
             } else {
@@ -92,6 +96,7 @@ public class Game {
         Options.setDAS(loadedDas);
         Options.setARR(loadedArr);
         Options.setVolume(loadedVol);
+        Options.setSDF(Math.max(0, Math.min(200, loadedSdf)));
     }
     void start(GamePanel gamePanel, Runnable onExit) {
         this.gamePanel = gamePanel;
@@ -111,8 +116,11 @@ public class Game {
     // reloads the game and enforeces a check on the config file
     void resetGame() {
         loadSettingsFromXml();
+
         DAS_DELAY = Options.getDAS();
         ARR_RATE  = Options.getARR();
+        SOFT_DROP_INTERVAL = Options.getSDF();
+
 
         lastFallTime = System.nanoTime() / 1_000_000;
         board    = new Board();
@@ -202,10 +210,23 @@ public class Game {
         }
 
         if (input.isKeyPressed(KeyEvent.VK_DOWN)) {
-            if (currentPiece.tryMove(0, 1, board)) {
-                lastActionWasRotation = false;
-                pendingSpin           = SPIN_NONE;
+            if (SOFT_DROP_INTERVAL == 0) {
+                while (currentPiece.tryMove(0, 1, board)) {
+                    lastFallTime          = System.nanoTime() / 1_000_000;
+                    lastActionWasRotation = false;
+                    pendingSpin           = SPIN_NONE;
+                }
+            } else if (softDropTimestamp == 0) {
+                softDropTimestamp = now;
+                dropOneCell();
+            } else {
+                while (now - softDropTimestamp >= SOFT_DROP_INTERVAL) {
+                    softDropTimestamp += SOFT_DROP_INTERVAL;
+                    dropOneCell();
+                }
             }
+        } else {
+            softDropTimestamp = 0;
         }
 
         if (input.isKeyPressed(KeyEvent.VK_UP) || input.isKeyPressed(KeyEvent.VK_Z)) {
@@ -235,7 +256,14 @@ public class Game {
             rotate180KeyHeld = false;
         }
     }
-
+    private void dropOneCell() {
+        if (currentPiece.tryMove(0, 1, board)) {
+            lastFallTime          = System.nanoTime() / 1_000_000; // suppress double-drop
+            lastActionWasRotation = false;
+            pendingSpin           = SPIN_NONE;
+            lockTimestamp         = 0;
+        }
+    }
 
     int detectSpin(Piece piece) {
         if (!lastActionWasRotation) return SPIN_NONE;
