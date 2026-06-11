@@ -7,7 +7,7 @@ import javax.imageio.ImageIO;
 
 public class GamePanel extends JPanel {
     private Game game;
-    private static final int TILE_SIZE = 30;
+    private static final int TILE_SIZE = 36;
     // Only render visible rows (rows 2–21, i.e. skip hidden buffer)
     private static final int VISIBLE_ROWS = 20;
     private static final int BUFFER_ROWS  = Board.ROWS - VISIBLE_ROWS; // = 2

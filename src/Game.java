@@ -215,6 +215,7 @@ public class Game {
                     lastFallTime          = System.nanoTime() / 1_000_000;
                     lastActionWasRotation = false;
                     pendingSpin           = SPIN_NONE;
+
                 }
             } else if (softDropTimestamp == 0) {
                 softDropTimestamp = now;
