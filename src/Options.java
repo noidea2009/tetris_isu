@@ -11,10 +11,10 @@ import java.io.File;
 public class Options extends JPanel {
 
     // Static settings — Game.java reads these on resetGame()
-    private static int das    = 119;
-    private static int arr    = 16;
-    private static int sdf    = 0;  // 0 ms = infinite/instant SDF down drop in Game
-    private static int volume = 50;
+    private static int das    ;
+    private static int arr    ;
+    private static int sdf    ;  // 0 ms = infinite/instant SDF down drop in Game
+    private static int volume ;
 
     public static int getDAS()    { return das; }
     public static int getARR()    { return arr; }
