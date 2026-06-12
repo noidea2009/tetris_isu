@@ -55,7 +55,7 @@ public class Board {
         return isCollision(piece.getShape(), piece.getX(), piece.getY());
     }
 
-
+        //deprecated
     public void placePiece(int[][] piece, int x, int y){
         for (int[] block : piece){
             int boardx = block[0] + x;
@@ -67,46 +67,25 @@ public class Board {
         }
         clearLines();
     }
-    public void placePiece(Piece piece) {
+    public int placePiece(Piece piece) {
         int[][] shape = piece.getShape();
-        int x = piece.getX();
-        int y = piece.getY();
-
+        int x = piece.getX(), y = piece.getY();
         for (int[] block : shape) {
-            int boardx = block[0] + x;
-            int boardy = block[1] + y;
-
-            if (boardy >= 0) {
-                // Store unique piece type (1-7)
-                grid[boardy][boardx] = piece.getType() + 1;
-            }
+            int bx = block[0] + x, by = block[1] + y;
+            if (by >= 0) grid[by][bx] = piece.getType() + 1;
         }
-
-        clearLines();
+        return clearLines();
     }
-    public void clearLines() {
-
-        // Start from bottom row
+    public int clearLines() {
+        int cleared = 0;
         for (int row = grid.length - 1; row >= 0; row--) {
-
             boolean full = true;
-
-            // Check if every column is occupied
             for (int col = 0; col < grid[row].length; col++) {
-                if (grid[row][col] == 0) {
-                    full = false;
-                    break;
-                }
+                if (grid[row][col] == 0) { full = false; break; }
             }
-
-            // Remove full row
-            if (full) {
-                removeLine(row);
-
-                // Recheck same row after shifting
-                row++;
-            }
+            if (full) { removeLine(row); row++; cleared++; }
         }
+        return cleared;
     }
 
     private void removeLine(int removeindex){
@@ -114,5 +93,11 @@ public class Board {
             grid[i]=grid[i-1].clone();
         }
         grid[0]=new int[grid[0].length];//new int list with 0
+    }
+    public boolean isBoardEmpty() {
+        for (int[] row : grid)
+            for (int cell : row)
+                if (cell != 0) return false;
+        return true;
     }
 }

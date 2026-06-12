@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <DataConfiguration>
-    <Parameters>
-        <DAS>119</DAS>
-        <ARR>16</ARR>
-        <SDF>0</SDF>
-        <Volume>50</Volume>
-    </Parameters>
+    <DAS>113</DAS>
+    <ARR>16</ARR>
+    <SDF>0</SDF>
+    <Volume>50</Volume>
 </DataConfiguration>

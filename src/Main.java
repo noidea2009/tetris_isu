@@ -25,7 +25,7 @@ public class Main {
         root.add(new Options(() -> showCard("MENU")), "OPTIONS");
 
         frame.add(root);
-        frame.setSize(660, 800);
+        frame.setSize(800, 1000);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 

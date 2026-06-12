@@ -7,22 +7,25 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.*;
 import java.io.File;
+
 public class Options extends JPanel {
 
     // Static settings — Game.java reads these on resetGame()
     private static int das    = 119;
     private static int arr    = 16;
-    private static int volume = 50;  // placeholder, wire to audio system when added
+    private static int sdf    = 0;  // 0 ms = infinite/instant SDF down drop in Game
+    private static int volume = 50;
 
     public static int getDAS()    { return das; }
     public static int getARR()    { return arr; }
+    public static int getSDF()    { return sdf; }
     public static int getVolume() { return volume; }
+
     public static void setDAS(int val)    { das = val; }
     public static void setARR(int val)    { arr = val; }
+    public static void setSDF(int val)    { sdf = val; }
     public static void setVolume(int val) { volume = val; }
-    private static int sdf = 50; // ms per cell; lower = faster
-    public static int getSDF()        { return sdf; }
-    public static void setSDF(int v)  { sdf = v; }
+
     public Options(Runnable onBack) {
         setOpaque(false);
         setLayout(new GridBagLayout());
@@ -37,13 +40,13 @@ public class Options extends JPanel {
         add(styledLabel("OPTIONS", 30), gbc);
         gbc.gridwidth = 1;
 
-        // Sliders
+        // Sliders (0 ms on SDF will trigger the instant-drop logic)
         addSliderRow("DAS (ms)",  das,    0, 300, gbc, 1, v -> das    = v);
         addSliderRow("ARR (ms)",  arr,    0, 100, gbc, 2, v -> arr    = v);
-        addSliderRow("SDF (ms)", sdf, 0, 200, gbc, 3, v -> sdf = v);
+        addSliderRow("SDF (ms)",  sdf,    0, 200, gbc, 3, v -> sdf    = v);
         addSliderRow("Volume",    volume, 0, 100, gbc, 4, v -> volume = v);
 
-        // Back button
+        // Buttons
         JButton back = styledButton("BACK");
         back.addActionListener(e -> onBack.run());
 
@@ -99,7 +102,6 @@ public class Options extends JPanel {
         add(row_panel, gbc);
     }
 
-
     private static JLabel styledLabel(String text, int size) {
         JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setForeground(Color.WHITE);
@@ -116,29 +118,28 @@ public class Options extends JPanel {
         btn.setPreferredSize(new Dimension(160, 44));
         return btn;
     }
+
     private void saveSettingsToXml() {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.newDocument();
 
-            // Create XML structure
+            // Root element matched to clean flat file configurations
             Element root = doc.createElement("DataConfiguration");
             doc.appendChild(root);
 
-            Element params = doc.createElement("Parameters");
-            root.appendChild(params);
+            // Directly append targets to maintain tag lookups seamlessly
+            createElement(doc, root, "DAS", String.valueOf(das));
+            createElement(doc, root, "ARR", String.valueOf(arr));
+            createElement(doc, root, "SDF", String.valueOf(sdf));
+            createElement(doc, root, "Volume", String.valueOf(volume));
 
-            // Add variables
-            createElement(doc, params, "DAS", String.valueOf(das));
-            createElement(doc, params, "ARR", String.valueOf(arr));
-            createElement(doc, params, "SDF", String.valueOf(sdf));
-            createElement(doc, params, "Volume", String.valueOf(volume));
-
-            // Write to file
+            // Write XML file
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
             DOMSource source = new DOMSource(doc);
             StreamResult result = new StreamResult(new File("config.xml"));
@@ -151,7 +152,6 @@ public class Options extends JPanel {
         }
     }
 
-    // Helper to keep code clean
     private void createElement(Document doc, Element parent, String tag, String value) {
         Element e = doc.createElement(tag);
         e.appendChild(doc.createTextNode(value));
