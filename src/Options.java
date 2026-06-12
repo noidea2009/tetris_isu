@@ -157,4 +157,48 @@ public class Options extends JPanel {
         e.appendChild(doc.createTextNode(value));
         parent.appendChild(e);
     }
+    public static void loadSettingsFromXml() {
+        File configFile = new File("config.xml");
+
+        // 1. If no file exists, just exit. The class fields will
+        // hold their default values (e.g., 0 or whatever you set them to).
+        if (!configFile.exists()) {
+            System.out.println("No config file found; using program defaults.");
+            return;
+        }
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(configFile);
+            doc.getDocumentElement().normalize();
+
+            // 2. Use a helper to parse, providing the target field and a fallback default
+            setDAS(parseSetting(doc, "DAS", 160));
+            setARR(parseSetting(doc, "ARR", 30));
+            setSDF(parseSetting(doc, "SDF", 50));
+            setVolume(parseSetting(doc, "Volume", 50));
+
+            System.out.println("Configuration successfully loaded.");
+        } catch (Exception e) {
+            System.err.println("Error parsing XML: " + e.getMessage());
+            // Optionally: reset file if corrupted
+        }
+    }
+
+    /**
+     * Helper to extract an integer from a tag safely.
+     */
+    private static int parseSetting(Document doc, String tagName, int defaultValue) {
+        NodeList nodes = doc.getElementsByTagName(tagName);
+        if (nodes != null && nodes.getLength() > 0) {
+            try {
+                String val = nodes.item(0).getTextContent();
+                return Integer.parseInt(val);
+            } catch (NumberFormatException e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
 }

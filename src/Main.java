@@ -17,6 +17,7 @@ public class Main {
     private static JPanel gameWrapper;
 
     public static void main(String[] args) {
+        Options.loadSettingsFromXml();
         frame      = new JFrame("Tetris");
         cardLayout = new CardLayout();
         root       = new BackgroundPanel(BG_FILE, cardLayout);

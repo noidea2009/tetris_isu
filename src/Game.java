@@ -70,38 +70,6 @@ public class Game {
     public boolean isHoldUsed()                 { return holdUsed; }
     public void setQueuePanel(NextQueuePanel qp) { this.queuePanel = qp; }
 
-    private void loadSettingsFromXml() {
-        int loadedDas = 160;
-        int loadedArr = 30;
-        int loadedSdf = 50;
-        int loadedVol = 50;
-
-        try {
-            File xmlFile = new File("config.xml");
-            if (xmlFile.exists()) {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                Document doc = builder.parse(xmlFile);
-                doc.getDocumentElement().normalize();
-
-                loadedDas = Integer.parseInt(doc.getElementsByTagName("DAS").item(0).getTextContent());
-                loadedArr = Integer.parseInt(doc.getElementsByTagName("ARR").item(0).getTextContent());
-                loadedVol = Integer.parseInt(doc.getElementsByTagName("Volume").item(0).getTextContent());
-                loadedSdf = Integer.parseInt(doc.getElementsByTagName("SDF").item(0).getTextContent());
-
-                System.out.println("Configuration loaded successfully.");
-            } else {
-                System.out.println("config.xml not found, using defaults.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error reading config.xml, using defaults: " + e.getMessage());
-        }
-
-        Options.setDAS(loadedDas);
-        Options.setARR(loadedArr);
-        Options.setVolume(loadedVol);
-        Options.setSDF(Math.max(0, Math.min(200, loadedSdf)));
-    }
 
     void start(GamePanel gamePanel, Runnable onExit) {
         this.gamePanel = gamePanel;
@@ -119,7 +87,7 @@ public class Game {
     }
 
     void resetGame() {
-        loadSettingsFromXml();
+
         DAS_DELAY = Options.getDAS();
         ARR_RATE  = Options.getARR();
         SOFT_DROP_INTERVAL = Options.getSDF();
