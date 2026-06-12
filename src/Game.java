@@ -460,7 +460,7 @@ public class Game {
     }
 
     void update() {
-        if (!isRunning) return;
+        if (!isRunning) resetGame();
         handleInput();
         applyGravity();
         gamePanel.repaint();
