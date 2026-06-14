@@ -28,6 +28,33 @@ public class Board {
     public int[][] getBoard(){
         return grid;
     }
+    //for spin detection
+    public boolean isBlockedByBlocks(int[][] piece, int x, int y) {
+        for (int[] block : piece) {
+            int targetX = block[0] + x;
+            int targetY = block[1] + y;
+
+            // IGNORE boundaries (x < 0, x >= cols, y >= rows)
+            // ONLY return true if it hits an existing block
+            if (targetY >= 0 && targetY < grid.length && targetX >= 0 && targetX < grid[0].length) {
+                if (grid[targetY][targetX] != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    public void printBoardDebug() {
+        System.out.println("--- Current Board State ---");
+        for (int y = 0; y < grid.length; y++) {
+            for (int x = 0; x < grid[y].length; x++) {
+                // Print 1 if occupied, 0 if empty
+                System.out.print((grid[y][x] != 0 ? "1" : "0") + " ");
+            }
+            System.out.println(); // New line for each row
+        }
+        System.out.println("---------------------------");
+    }
     public boolean isCollision(int[][] piece, int x, int y) {
         for (int[] block : piece) {
 

@@ -20,7 +20,7 @@ public class Game {
 
     private Runnable onExit;
     //music variables
-    private MusicPlayer bGMusic;
+    private MusicPlayer bGMusic = new MusicPlayer();
     Clip place;
 
     // button flags
@@ -123,7 +123,7 @@ public class Game {
     void start(GamePanel gamePanel, Runnable onExit) {
         this.gamePanel = gamePanel;
         loadAudio();
-        //bGMusic.start();
+        bGMusic.start();
         this.onExit    = onExit;
         input = new InputHandler();
         input.getinputfromkeyboard(gamePanel);
@@ -296,77 +296,130 @@ public class Game {
     }
 
     int detectSpin(Piece piece) {
-        if (lastRotationType == -1) return SPIN_NONE;
-        if (!lastActionWasRotation) return SPIN_NONE;
+        if (!lastActionWasRotation) {
+            return SPIN_NONE;
+        }
 
-        int type = piece.getType();
+        // T piece
+        if (piece.getType() == 1) {
+
+            int px = piece.getX();
+            int py = piece.getY();
+
+            boolean tl = isCornerFilled(px + 0, py + 0);
+            boolean tr = isCornerFilled(px + 2, py + 0);
+            boolean bl = isCornerFilled(px + 0, py + 2);
+            boolean br = isCornerFilled(px + 2, py + 2);
+
+            int filledCorners =
+                    (tl ? 1 : 0) +
+                            (tr ? 1 : 0) +
+                            (bl ? 1 : 0) +
+                            (br ? 1 : 0);
+
+
+            int rot = piece.getRotation();
+
+            boolean front0, front1;
+
+            switch (rot) {
+                case 0: // Up
+                    front0 = tl;
+                    front1 = tr;
+                    break;
+
+                case 1: // Right
+                    front0 = tr;
+                    front1 = br;
+                    break;
+
+                case 2: // Down
+                    front0 = bl;
+                    front1 = br;
+                    break;
+
+                default: // Left
+                    front0 = tl;
+                    front1 = bl;
+                    break;
+            }
+            System.out.printf(
+                    "rot=%d TL=%b TR=%b BL=%b BR=%b kick=%d%n",
+                    piece.getRotation(),
+                    tl, tr, bl, br,
+                    piece.getLastUsedKickIndex()
+            );
+            System.out.printf(
+                    "TL(%d,%d) TR(%d,%d) BL(%d,%d) BR(%d,%d)%n",
+                    px, py,
+                    px+2, py,
+                    px, py+2,
+                    px+2, py+2
+            );
+
+            System.out.printf(
+                    "T x=%d y=%d rot=%d%n",
+                    px, py, piece.getRotation()
+            );
+            for (int[] b : piece.getShape()) {
+                System.out.printf(
+                        "(%d,%d) ",
+                        b[0] + px,
+                        b[1] + py
+                );
+            }
+
+           System.out.println();
+            if (filledCorners < 3)
+                return SPIN_NONE;
+
+            if (!(front0 && front1) && piece.getLastUsedKickIndex() == 0) {
+                return SPIN_NONE;
+            }
+            // Both front corners occupied = proper T-Spin
+            if (front0 && front1) {
+                playSound("spin_fixed.wav");
+                return SPIN_FULL;
+            }
+
+            // Mini upgraded by fifth kick
+            if (piece.getLastUsedKickIndex() == 4) {
+                playSound("spin_fixed.wav");
+                return SPIN_FULL;
+            }
+            playSound("spin_fixed.wav");
+            return SPIN_MINI;
+        }
+
+        // All-Mini for non-T pieces
         int px = piece.getX();
         int py = piece.getY();
-        int[][] shape = piece.getShape();
 
-        boolean canMoveLeft  = !board.isCollision(shape, px - 1, py);
-        boolean canMoveRight = !board.isCollision(shape, px + 1, py);
-        boolean canMoveUp    = !board.isCollision(shape, px, py - 1);
-        boolean isImmobile   = !canMoveLeft && !canMoveRight && !canMoveUp;
+        boolean canMoveLeft =
+                !board.isCollision(piece.getShape(), px - 1, py);
 
-        if (type != 1) {
-            if (isImmobile) playSound("spin_fixed.wav");
-            return isImmobile ? SPIN_MINI : SPIN_NONE;
-        }
+        boolean canMoveRight =
+                !board.isCollision(piece.getShape(), px + 1, py);
 
-        boolean tl = isOccupied(px + 0, py + 0);
-        boolean tr = isOccupied(px + 2, py + 0);
-        boolean bl = isOccupied(px + 0, py + 2);
-        boolean br = isOccupied(px + 2, py + 2);
+        boolean canMoveUp =
+                !board.isCollision(piece.getShape(), px, py - 1);
 
-        int filledCorners = (tl ? 1 : 0) + (tr ? 1 : 0) + (bl ? 1 : 0) + (br ? 1 : 0);
-        System.out.println("Corners detected: TL=" + tl + " TR=" + tr + " BL=" + bl + " BR=" + br + " | Total: " + filledCorners);
-        if (filledCorners < 3) return SPIN_NONE;
-
-        //Check for Full Spin
-        if (piece.getLastUsedKickIndex() == 4) {
+        if (!canMoveLeft && !canMoveRight && !canMoveUp) {
             playSound("spin_fixed.wav");
-            return SPIN_FULL;
+            return SPIN_MINI;
         }
-
-        int rot = piece.getRotation();
-        boolean front0, front1;
-
-        if (rot == 0) {
-            front0 = tl; front1 = tr;
-        } else if (rot == 1) {
-            front0 = tr; front1 = br;
-        } else if (rot == 2) {
-            front0 = bl; front1 = br;
-        } else {
-            front0 = tl; front1 = bl;
-        }
-
-        if (front0 && front1) {
-            playSound("spin_fixed.wav");
-            return SPIN_FULL;
-        }
-
-        return SPIN_MINI;
+        return SPIN_NONE;
     }
 
 
-    private boolean isOccupied(int x, int y) {
-        // If it's outside the horizontal bounds, it IS a wall.
-        if (x < 0 || x >= Board.COLS) {
+    private boolean isCornerFilled(int x, int y) {
+        // Treat boundaries as FILLED (this is the key to T-Spin wall-tucks)
+        if (x < 0 || x >= Board.COLS || y < 0 || y >= Board.ROWS) {
             return true;
         }
-        // If it's below the board, it acts like a floor/wall.
-        if (y >= Board.ROWS) {
-            return true;
-        }
-        // If it's above the board, it's empty (unless you have a ceiling).
-        if (y < 0) return false;
-
-        // Check actual board data
-        return board.getBoard()[y][x] > 0;
+        // Only return true if there is an actual block on the board
+        return board.getBoard()[y][x] != 0;
     }
-
     void hold() {
         if (holdUsed) return;
         holdUsed = true;
@@ -395,7 +448,8 @@ public class Game {
 
     void lockPiece() {
         lastSpin = detectSpin(currentPiece);
-        if      (lastSpin == SPIN_MINI) System.out.println("\n[!] MINI SPIN (type " + currentPiece.getType() + ")");
+        if      (lastSpin == SPIN_MINI) {System.out.println("\n[!] MINI SPIN (type " + currentPiece.getType() + ")") ;
+            board.printBoardDebug();}
         else if (lastSpin == SPIN_FULL) System.out.println("\n[!] FULL SPIN (type " + currentPiece.getType() + ")");
         else                            System.out.println("\n[!] No spin");
 
