@@ -55,10 +55,19 @@ public class MusicPlayer {
         // We don't use try-with-resources on AudioInputStream here because
         // the Clip needs the stream to remain open until it's done playing.
         try {
+            //Get the stream
             AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicFile);
+
+            // Initialize the clip FIRST
             currentClip = AudioSystem.getClip();
+
+            // Open the clip with the stream
             currentClip.open(audioInput);
 
+            // Apply volume (Now that the clip is open, controls are available)
+            updateVolume(Options.getVolume());
+
+            // Setup listener and start
             currentClip.addLineListener(event -> {
                 if (event.getType() == LineEvent.Type.STOP) {
                     if (currentClip.getMicrosecondPosition() >= currentClip.getMicrosecondLength()) {
@@ -84,11 +93,24 @@ public class MusicPlayer {
         }
     }
 
-    // Optional: add a method to skip to the next song manually
+    // method to skip to the next song manually
     public void next() {
         if (playlist != null && !playlist.isEmpty()) {
             songnum = (songnum + 1) % playlist.size();
             playPlaylist(playlist);
+        }
+    }
+    public void updateVolume(int volumePercent) {
+        if (currentClip != null && currentClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+            FloatControl gainControl = (FloatControl) currentClip.getControl(FloatControl.Type.MASTER_GAIN);
+
+            // Convert 0-100 to Decibels (-80.0 to 6.0206)
+            // Note: 0% volume is usually silent, -80dB is the standard floor for Java Clips
+            float min = gainControl.getMinimum();
+            float max = gainControl.getMaximum();
+            float volume = min + (max - min) * (volumePercent / 100.0f);
+
+            gainControl.setValue(volume);
         }
     }
 }
