@@ -29,7 +29,7 @@ public class Game {
     private boolean hardDropKeyHeld = false;
     private boolean rotate180KeyHeld   = false;
     private boolean escKeyHeld      = false;
-
+    private int lastRotationType = -1; // -1: none, 0: CW, 1: CCW, 2: 180
     // spin flags
     private static final int SPIN_NONE = 0;
     private static final int SPIN_MINI = 1;
@@ -204,19 +204,16 @@ public class Game {
                 arrTimestamp = now;
                 if (currentPiece.tryMove(dx, 0, board)) {
                     lockTimestamp         = 0;
-                    lastActionWasRotation = false;
                     pendingSpin           = SPIN_NONE;
                 }
             } else if (now - dasTimestamp >= DAS_DELAY) {
                 if (ARR_RATE == 0) {
                     while (currentPiece.tryMove(dx, 0, board)) { lockTimestamp = 0; }
-                    lastActionWasRotation = false;
                     pendingSpin           = SPIN_NONE;
                 } else {
                     while (now - arrTimestamp >= ARR_RATE) {
                         if (currentPiece.tryMove(dx, 0, board)) {
                             lockTimestamp         = 0;
-                            lastActionWasRotation = false;
                             pendingSpin           = SPIN_NONE;
                         }
                         arrTimestamp += ARR_RATE;
@@ -243,7 +240,6 @@ public class Game {
                 }
                 if (shiftedDown) {
                     lastFallTime          = now;
-                    lastActionWasRotation = false;
                     pendingSpin           = SPIN_NONE;
                     if (lockTimestamp == 0) {
                         lockTimestamp = now; // Starts lock delay countdown instantly on hit
@@ -264,11 +260,12 @@ public class Game {
 
         if (input.isKeyPressed(KeyEvent.VK_UP) || input.isKeyPressed(KeyEvent.VK_Z)) {
             if (!rotateKeyHeld) {
-                boolean rotated = input.isKeyPressed(KeyEvent.VK_UP)
-                        ? currentPiece.rotateCW(board)
-                        : currentPiece.rotateCCW(board);
+                boolean isCW = input.isKeyPressed(KeyEvent.VK_UP);
+                boolean rotated = isCW ? currentPiece.rotateCW(board) : currentPiece.rotateCCW(board);
+
                 if (rotated) {
                     lastActionWasRotation = true;
+                    lastRotationType = isCW? 1 :2;
                     pendingSpin           = detectSpin(currentPiece);
                 }
                 rotateKeyHeld = true;
@@ -293,13 +290,13 @@ public class Game {
     private void dropOneCell() {
         if (currentPiece.tryMove(0, 1, board)) {
             lastFallTime          = System.nanoTime() / 1_000_000;
-            lastActionWasRotation = false;
             pendingSpin           = SPIN_NONE;
             lockTimestamp         = 0;
         }
     }
 
     int detectSpin(Piece piece) {
+        if (lastRotationType == -1) return SPIN_NONE;
         if (!lastActionWasRotation) return SPIN_NONE;
 
         int type = piece.getType();
@@ -323,9 +320,10 @@ public class Game {
         boolean br = isOccupied(px + 2, py + 2);
 
         int filledCorners = (tl ? 1 : 0) + (tr ? 1 : 0) + (bl ? 1 : 0) + (br ? 1 : 0);
-
+        System.out.println("Corners detected: TL=" + tl + " TR=" + tr + " BL=" + bl + " BR=" + br + " | Total: " + filledCorners);
         if (filledCorners < 3) return SPIN_NONE;
 
+        //Check for Full Spin
         if (piece.getLastUsedKickIndex() == 4) {
             playSound("spin_fixed.wav");
             return SPIN_FULL;
@@ -349,16 +347,23 @@ public class Game {
             return SPIN_FULL;
         }
 
-        if (isImmobile) playSound("spin_fixed.wav");
         return SPIN_MINI;
     }
 
 
     private boolean isOccupied(int x, int y) {
-        if (x < 0 || x >= Board.COLS || y >= Board.ROWS) {
+        // If it's outside the horizontal bounds, it IS a wall.
+        if (x < 0 || x >= Board.COLS) {
             return true;
         }
+        // If it's below the board, it acts like a floor/wall.
+        if (y >= Board.ROWS) {
+            return true;
+        }
+        // If it's above the board, it's empty (unless you have a ceiling).
         if (y < 0) return false;
+
+        // Check actual board data
         return board.getBoard()[y][x] > 0;
     }
 
@@ -389,13 +394,15 @@ public class Game {
     }
 
     void lockPiece() {
-        lastSpin = pendingSpin;
+        lastSpin = detectSpin(currentPiece);
         if      (lastSpin == SPIN_MINI) System.out.println("\n[!] MINI SPIN (type " + currentPiece.getType() + ")");
         else if (lastSpin == SPIN_FULL) System.out.println("\n[!] FULL SPIN (type " + currentPiece.getType() + ")");
         else                            System.out.println("\n[!] No spin");
 
         lastActionWasRotation = false;
-        pendingSpin           = SPIN_NONE;
+        lastRotationType = -1;
+        pendingSpin = SPIN_NONE;
+
         int linesCleared = board.placePiece(currentPiece);
         calculateScore(linesCleared, lastSpin);
         spawnPiece();
@@ -484,7 +491,6 @@ public class Game {
                 lockResetCount = 0;
             }
         } else {
-            lastActionWasRotation = false;
             if (lockTimestamp != 0 && lockResetCount < MAX_LOCK_RESETS) {
                 lockTimestamp = now;
                 lockResetCount++;
