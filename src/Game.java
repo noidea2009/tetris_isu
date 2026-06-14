@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 import org.w3c.dom.*;
+
+import javax.swing.Timer;
 import javax.xml.parsers.*;
 import java.io.File;
+import java.util.*;
+import javax.sound.sampled.*;
 
 public class Game {
     private Board board;
@@ -15,6 +19,9 @@ public class Game {
     private javax.swing.Timer gameTimer;
 
     private Runnable onExit;
+    //music variables
+    private MusicPlayer bGMusic;
+    Clip place;
 
     // button flags
     private boolean rotateKeyHeld   = false;
@@ -70,9 +77,53 @@ public class Game {
     public boolean isHoldUsed()                 { return holdUsed; }
     public void setQueuePanel(NextQueuePanel qp) { this.queuePanel = qp; }
 
+    private Map<String, List<Clip>> audioPool = new HashMap<>();
+    private static final int CLIPS_PER_SOUND = 8;
+    public void loadAudio() {
+        try {
+            for (String sound : new String[]{"spin_fixed.wav", "hard_drop_fixed.wav","allclear_fixed.wav","clearline_fixed.wav","clearquad_fixed.wav","clearspin_fixed.wav"}) {
+                List<Clip> clips = new ArrayList<>();
+                for (int i = 0; i < CLIPS_PER_SOUND; i++) {
+                    Clip clip = AudioSystem.getClip();
+                    clip.open(AudioSystem.getAudioInputStream(new File("tetris_sfx/" + sound)));
+                    clips.add(clip);
+                }
+                audioPool.put(sound, clips);
+            }
+        } catch (Exception e) {
+            System.err.println("Audio load error: " + e.getMessage());
+        }
+    }
 
+
+    private void playSound(String filename) {
+        List<Clip> clips = audioPool.get(filename);
+        if (clips != null) {
+            for (Clip clip : clips) {
+                if (!clip.isRunning()) {
+                    clip.setFramePosition(0);
+                    clip.start();
+                    return;
+                }
+            }
+            // Fallback: if all clips busy, restart oldest (shouldn't happen often)
+            System.err.println("[Audio] No free clips for " + filename);
+        } else {
+            System.err.println("[Audio] Sound not loaded: " + filename);
+        }
+    }
+    public void cleanup() {
+        for (List<Clip> clips : audioPool.values()) {
+            for (Clip clip : clips) {
+                if (clip.isOpen()) clip.close();
+            }
+        }
+        audioPool.clear();
+    }
     void start(GamePanel gamePanel, Runnable onExit) {
         this.gamePanel = gamePanel;
+        loadAudio();
+        //bGMusic.start();
         this.onExit    = onExit;
         input = new InputHandler();
         input.getinputfromkeyboard(gamePanel);
@@ -84,6 +135,7 @@ public class Game {
     void stop() {
         isRunning = false;
         if (gameTimer != null) gameTimer.stop();
+        cleanup();
     }
 
     void resetGame() {
@@ -261,6 +313,7 @@ public class Game {
         boolean isImmobile   = !canMoveLeft && !canMoveRight && !canMoveUp;
 
         if (type != 1) {
+            if (isImmobile) playSound("spin_fixed.wav");
             return isImmobile ? SPIN_MINI : SPIN_NONE;
         }
 
@@ -274,6 +327,7 @@ public class Game {
         if (filledCorners < 3) return SPIN_NONE;
 
         if (piece.getLastUsedKickIndex() == 4) {
+            playSound("spin_fixed.wav");
             return SPIN_FULL;
         }
 
@@ -291,11 +345,14 @@ public class Game {
         }
 
         if (front0 && front1) {
+            playSound("spin_fixed.wav");
             return SPIN_FULL;
         }
 
+        if (isImmobile) playSound("spin_fixed.wav");
         return SPIN_MINI;
     }
+
 
     private boolean isOccupied(int x, int y) {
         if (x < 0 || x >= Board.COLS || y >= Board.ROWS) {
@@ -324,8 +381,10 @@ public class Game {
 
     void hardDrop() {
         while (currentPiece.tryMove(0, 1, board));
+        playSound("hard_drop_fixed.wav");
         lockTimestamp  = 0;
         lockResetCount = 0;
+
         lockPiece();
     }
 
@@ -351,7 +410,13 @@ public class Game {
             combo = -1;
             return;
         }
-
+        if (spin != SPIN_NONE) {
+            playSound("clearspin_fixed.wav");  // T-spin/S-spin/Z-spin clear
+        } else if (lines == 4) {
+            playSound("clearquad_fixed.wav");  // Tetris (4-line clear)
+        } else {
+            playSound("clearline_fixed.wav");  // 1-3 line clear
+        }
         combo++;
         score += 50L * combo * level;
 
@@ -377,6 +442,7 @@ public class Game {
         score += base * level;
 
         if (board.isBoardEmpty()) {
+            playSound("allclear_fixed.wav");
             long pcBonus;
             if (wasBackToBack && lines == 4) {
                 pcBonus = 3200L;
@@ -434,6 +500,7 @@ public class Game {
         gamePanel.repaint();
         if (queuePanel != null) queuePanel.repaint();
         if (holdPanel  != null) holdPanel.repaint();
+
     }
 
     public Board getBoard()        { return board; }
