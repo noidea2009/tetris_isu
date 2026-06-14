@@ -1,4 +1,14 @@
+/**
+ * Provides static data structures for Tetromino shapes, wall kick offsets,
+ * and 180-degree rotation kick tables based on the Super Rotation System (SRS).
+ *Made by Junjit Chang
+ */
 public final class PieceData {
+    /**
+     * Multidimensional array representing the block coordinates for each Tetromino type
+     * in all four rotation states.
+     * Indexing: [pieceType][rotationState][blockIndex][xyCoordinate]
+     */
     public static final int[][][][] SHAPES = {
 
             // I PIECE
@@ -97,6 +107,16 @@ public final class PieceData {
             { {0,0}, {0,1}, {0,2}, {0,-1}, {0,-2}, {1,0} }    // L -> R
     };
 
+    /**
+     * Calculates the wall kick offsets required for a piece to successfully rotate
+     * from one state to another.
+     *
+     * @param type    The integer identifier for the piece (0-6).
+     * @param fromRot The current rotation state (0: 0°, 1: 90°, 2: 180°, 3: 270°).
+     * @param toRot   The target rotation state (0-3).
+     * @return A 2D array of {x, y} coordinate offsets to test for collision.
+     * @throws IllegalArgumentException If type or rotation states are out of valid bounds.
+     */
     public static int[][] getKicks(int type, int fromRot, int toRot) {
         if (type < 0 || type > 6) throw new IllegalArgumentException("Invalid piece type: " + type);
         if (fromRot < 0 || fromRot > 3 || toRot < 0 || toRot > 3)

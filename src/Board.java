@@ -1,41 +1,48 @@
+/**
+ * Made by Junjit Chang
+ * Represents the game board state. Manages the 22x10 grid, collision detection,
+ * piece locking, and line clearing logic.
+ */
 public class Board {
     private int[][] grid;
     public static final int COLS = 10;
     public static final int ROWS = 22;
-    public void reset(){
-        grid = new int[22][10];
 
+    /**
+     * Initializes the board and resets the grid to empty.
+     */
+    public void reset() {
+        grid = new int[ROWS][COLS];
     }
-    public Board(){
+
+    /**
+     * Constructs a new Board instance and initializes the grid.
+     */
+    public Board() {
         reset();
     }
-    //TO DO: Maintain the grid (10×20)
-    //Handle collision detection
-    //Handle piece placement (locking)
-    //Handle line clearing
-    //
-    //Key Data:
-    //
-    //int[][] grid
-    //
-    //Key Methods:
-    //
-    //isCollision(piece, x, y) done
-    //placePiece(piece, x, y) done
-    //clearLines() done
-    //removeLine(int y) y is the index of the row, use .remove and then clone the index -1 .clone becuase you want it to be the one that is above
-    
-    public int[][] getBoard(){
+
+    /**
+     * Returns the raw 2D array representation of the board.
+     * @return The 22x10 grid.
+     */
+    public int[][] getBoard() {
         return grid;
     }
-    //for spin detection
+
+    /**
+     * Checks if a piece would be blocked by existing pieces on the board.
+     * Used primarily for spin detection (ignoring wall/floor collisions).
+     * * @param piece The shape of the piece to check.
+     * @param x The target column.
+     * @param y The target row.
+     * @return true if blocked by a piece, false otherwise.
+     */
     public boolean isBlockedByBlocks(int[][] piece, int x, int y) {
         for (int[] block : piece) {
             int targetX = block[0] + x;
             int targetY = block[1] + y;
 
-            // IGNORE boundaries (x < 0, x >= cols, y >= rows)
-            // ONLY return true if it hits an existing block
             if (targetY >= 0 && targetY < grid.length && targetX >= 0 && targetX < grid[0].length) {
                 if (grid[targetY][targetX] != 0) {
                     return true;
@@ -44,56 +51,58 @@ public class Board {
         }
         return false;
     }
+
+    /**
+     * Prints a debug representation of the board to the console.
+     */
     public void printBoardDebug() {
         System.out.println("--- Current Board State ---");
-        for (int y = 0; y < grid.length; y++) {
-            for (int x = 0; x < grid[y].length; x++) {
-                // Print 1 if occupied, 0 if empty
-                System.out.print((grid[y][x] != 0 ? "1" : "0") + " ");
+        for (int[] row : grid) {
+            for (int cell : row) {
+                System.out.print((cell != 0 ? "1" : "0") + " ");
             }
-            System.out.println(); // New line for each row
+            System.out.println();
         }
         System.out.println("---------------------------");
     }
+
+    /**
+     * Checks if a piece collides with board boundaries or existing blocks.
+     * @param piece The shape coordinates of the piece.
+     * @param x The board x-coordinate to test.
+     * @param y The board y-coordinate to test.
+     * @return true if collision occurs.
+     */
     public boolean isCollision(int[][] piece, int x, int y) {
         for (int[] block : piece) {
-
             int targetX = block[0] + x;
             int targetY = block[1] + y;
 
-            if (targetX < 0 || targetX >= grid[0].length) {
+            if (targetX < 0 || targetX >= grid[0].length || targetY >= grid.length) {
                 return true;
             }
 
-            if (targetY >= grid.length) {
-                return true;
-            }
-
-            // Any non-zero cell is occupied
             if (targetY >= 0 && grid[targetY][targetX] != 0) {
                 return true;
             }
         }
-
         return false;
     }
-    //overloaded for type: Piece
+
+    /**
+     * Overloaded collision check using a Piece object.
+     * @param piece The piece to check.
+     * @return true if collision occurs.
+     */
     public boolean isCollision(Piece piece) {
         return isCollision(piece.getShape(), piece.getX(), piece.getY());
     }
 
-        //deprecated
-    public void placePiece(int[][] piece, int x, int y){
-        for (int[] block : piece){
-            int boardx = block[0] + x;
-            int boardy = block[1] +y;
-            if (boardy >= 0){
-                grid[boardy][boardx] = 1;
-            }
-
-        }
-        clearLines();
-    }
+    /**
+     * Locks a piece into the board and triggers line clearing.
+     * @param piece The piece to place.
+     * @return The number of lines cleared.
+     */
     public int placePiece(Piece piece) {
         int[][] shape = piece.getShape();
         int x = piece.getX(), y = piece.getY();
@@ -103,6 +112,11 @@ public class Board {
         }
         return clearLines();
     }
+
+    /**
+     * Scans the grid for full rows, removes them, and shifts higher blocks down.
+     * @return The total number of lines cleared.
+     */
     public int clearLines() {
         int cleared = 0;
         for (int row = grid.length - 1; row >= 0; row--) {
@@ -110,17 +124,30 @@ public class Board {
             for (int col = 0; col < grid[row].length; col++) {
                 if (grid[row][col] == 0) { full = false; break; }
             }
-            if (full) { removeLine(row); row++; cleared++; }
+            if (full) {
+                removeLine(row);
+                row++;
+                cleared++;
+            }
         }
         return cleared;
     }
 
-    private void removeLine(int removeindex){
-        for(int i = removeindex; i> 0; i--){
-            grid[i]=grid[i-1].clone();
+    /**
+     * Shifts all rows above the given index down by one.
+     * @param removeindex The row index to clear.
+     */
+    private void removeLine(int removeindex) {
+        for(int i = removeindex; i > 0; i--) {
+            grid[i] = grid[i-1].clone();
         }
-        grid[0]=new int[grid[0].length];//new int list with 0
+        grid[0] = new int[grid[0].length];
     }
+
+    /**
+     * Checks if the board contains no blocks.
+     * @return true if the board is empty.
+     */
     public boolean isBoardEmpty() {
         for (int[] row : grid)
             for (int cell : row)

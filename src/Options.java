@@ -8,13 +8,18 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.*;
 import java.io.File;
 
+/**
+ * Made by Junjit Chang
+ * Manages game settings configuration and the GUI for the Options menu.
+ * This class handles both the in-memory state of game parameters and their
+ * persistence to an XML configuration file.
+ */
 public class Options extends JPanel {
 
-    // Static settings — Game.java reads these on resetGame()
-    private static int das    ;
-    private static int arr    ;
-    private static int sdf    ;  // 0 ms = infinite/instant SDF down drop in Game
-    private static int volume ;
+    private static int das;
+    private static int arr;
+    private static int sdf;
+    private static int volume;
 
     public static int getDAS()    { return das; }
     public static int getARR()    { return arr; }
@@ -26,6 +31,10 @@ public class Options extends JPanel {
     public static void setSDF(int val)    { sdf = val; }
     public static void setVolume(int val) { volume = val; }
 
+    /**
+     * Constructs the Options panel and initializes the UI components.
+     * * @param onBack A {@link Runnable} to be executed when the back button is clicked.
+     */
     public Options(Runnable onBack) {
         setOpaque(false);
         setLayout(new GridBagLayout());
@@ -35,18 +44,15 @@ public class Options extends JPanel {
         gbc.gridx   = 0;
         gbc.fill    = GridBagConstraints.HORIZONTAL;
 
-        // Title
         gbc.gridy = 0; gbc.gridwidth = 2;
         add(styledLabel("OPTIONS", 30), gbc);
         gbc.gridwidth = 1;
 
-        // Sliders (0 ms on SDF will trigger the instant-drop logic)
         addSliderRow("DAS (ms)",  das,    0, 300, gbc, 1, v -> das    = v);
         addSliderRow("ARR (ms)",  arr,    0, 100, gbc, 2, v -> arr    = v);
         addSliderRow("SDF (ms)",  sdf,    0, 200, gbc, 3, v -> sdf    = v);
         addSliderRow("Volume",    volume, 0, 100, gbc, 4, v -> volume = v);
 
-        // Buttons
         JButton back = styledButton("BACK");
         back.addActionListener(e -> onBack.run());
 
@@ -65,9 +71,11 @@ public class Options extends JPanel {
         add(buttonPanel, gbc);
     }
 
+    /**
+     * Helper method to generate a row containing a label and an interactive slider.
+     */
     private void addSliderRow(String label, int initial, int min, int max,
                               GridBagConstraints gbc, int row, IntConsumer onChange) {
-        // Label column
         gbc.gridy  = row;
         gbc.gridx  = 0;
         gbc.fill   = GridBagConstraints.NONE;
@@ -80,7 +88,6 @@ public class Options extends JPanel {
         valueLabel.setPreferredSize(new Dimension(36, 20));
         valueLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        // Slider
         JSlider slider = new JSlider(min, max, initial);
         slider.setBackground(Color.BLACK);
         slider.setForeground(Color.WHITE);
@@ -119,23 +126,23 @@ public class Options extends JPanel {
         return btn;
     }
 
+    /**
+     * Serializes current static settings to a 'config.xml' file.
+     */
     private void saveSettingsToXml() {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.newDocument();
 
-            // Root element matched to clean flat file configurations
             Element root = doc.createElement("DataConfiguration");
             doc.appendChild(root);
 
-            // Directly append targets to maintain tag lookups seamlessly
             createElement(doc, root, "DAS", String.valueOf(das));
             createElement(doc, root, "ARR", String.valueOf(arr));
             createElement(doc, root, "SDF", String.valueOf(sdf));
             createElement(doc, root, "Volume", String.valueOf(volume));
 
-            // Write XML file
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -157,11 +164,14 @@ public class Options extends JPanel {
         e.appendChild(doc.createTextNode(value));
         parent.appendChild(e);
     }
+
+    /**
+     * Parses the 'config.xml' file and updates the application's static settings.
+     * If the file is missing or corrupted, default values are applied.
+     */
     public static void loadSettingsFromXml() {
         File configFile = new File("config.xml");
 
-        // 1. If no file exists, just exit. The class fields will
-        // hold their default values (e.g., 0 or whatever you set them to).
         if (!configFile.exists()) {
             System.out.println("No config file found; using program defaults.");
             return;
@@ -173,7 +183,6 @@ public class Options extends JPanel {
             Document doc = builder.parse(configFile);
             doc.getDocumentElement().normalize();
 
-            // 2. Use a helper to parse, providing the target field and a fallback default
             setDAS(parseSetting(doc, "DAS", 160));
             setARR(parseSetting(doc, "ARR", 30));
             setSDF(parseSetting(doc, "SDF", 50));
@@ -182,12 +191,15 @@ public class Options extends JPanel {
             System.out.println("Configuration successfully loaded.");
         } catch (Exception e) {
             System.err.println("Error parsing XML: " + e.getMessage());
-            // Optionally: reset file if corrupted
         }
     }
 
     /**
-     * Helper to extract an integer from a tag safely.
+     * Extracts an integer value from a specified XML tag.
+     * * @param doc          The XML Document to search.
+     * @param tagName      The tag name to look for.
+     * @param defaultValue The value to return if the tag is missing or invalid.
+     * @return The parsed integer value or the default if parsing fails.
      */
     private static int parseSetting(Document doc, String tagName, int defaultValue) {
         NodeList nodes = doc.getElementsByTagName(tagName);

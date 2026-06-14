@@ -72,13 +72,25 @@ public class Game {
     private int     combo             = -1;
     private boolean backToBack        = false;
 
+    /**
+     * @param hp the hold piece preview panel
+     */
     public void setHoldPanel(HoldPanel hp)      { this.holdPanel  = hp; }
+
     public int  getHoldType()                   { return holdType; }
     public boolean isHoldUsed()                 { return holdUsed; }
+
+    /**
+     * @param qp the next queue preview panel
+     */
     public void setQueuePanel(NextQueuePanel qp) { this.queuePanel = qp; }
 
     private Map<String, List<Clip>> audioPool = new HashMap<>();
     private static final int CLIPS_PER_SOUND = 8;
+
+    /**
+     * Preloads all sound effects into the audio pool
+     */
     public void loadAudio() {
         try {
             for (String sound : new String[]{"spin_fixed.wav", "hard_drop_fixed.wav","allclear_fixed.wav","clearline_fixed.wav","clearquad_fixed.wav","clearspin_fixed.wav"}) {
@@ -95,7 +107,10 @@ public class Game {
         }
     }
 
-
+    /**
+     * Plays a sound from the audio pool, reusing available clips
+     * @param filename the sound file name to play
+     */
     private void playSound(String filename) {
         List<Clip> clips = audioPool.get(filename);
         if (clips != null) {
@@ -112,6 +127,10 @@ public class Game {
             System.err.println("[Audio] Sound not loaded: " + filename);
         }
     }
+
+    /**
+     * Closes all audio clips and clears the audio pool
+     */
     public void cleanup() {
         for (List<Clip> clips : audioPool.values()) {
             for (Clip clip : clips) {
@@ -120,6 +139,12 @@ public class Game {
         }
         audioPool.clear();
     }
+
+    /**
+     * Initializes and starts the game loop
+     * @param gamePanel the main game rendering panel
+     * @param onExit callback invoked when game exits
+     */
     void start(GamePanel gamePanel, Runnable onExit) {
         this.gamePanel = gamePanel;
         loadAudio();
@@ -132,14 +157,20 @@ public class Game {
         gameTimer.start();
     }
 
+    /**
+     * Stops the game loop and cleans up resources
+     */
     void stop() {
         isRunning = false;
         if (gameTimer != null) gameTimer.stop();
         cleanup();
     }
 
+    /**
+     * Resets all game state to initial values
+     */
     void resetGame() {
-
+        // reloads the DAS and ARR settings
         DAS_DELAY = Options.getDAS();
         ARR_RATE  = Options.getARR();
         SOFT_DROP_INTERVAL = Options.getSDF();
@@ -159,19 +190,31 @@ public class Game {
         backToBack        = false;
     }
 
+    /**
+     * Refills the piece bag with shuffled piece types
+     */
     void refillBag() {
+        //add element once it has less than 14 elements, standard TETR.IO rules
         while (bag.size() < 14) {
             List<Integer> newBag = new ArrayList<>();
             for (int i = 0; i < 7; i++) newBag.add(i);
+            //I am cutting slack here because its more convenient
             Collections.shuffle(newBag);
             bag.addAll(newBag);
         }
     }
 
+    /**
+     * @param count maximum number of upcoming pieces to return
+     * @return list of upcoming piece types
+     */
     public List<Integer> getNextQueue(int count) {
         return bag.subList(0, Math.min(count, bag.size()));
     }
 
+    /**
+     * Processes all keyboard input for movement, rotation, and actions
+     */
     void handleInput() {
         long now = System.nanoTime() / 1_000_000;
 
@@ -198,7 +241,7 @@ public class Game {
         }
         if (input.isKeyPressed(KeyEvent.VK_LEFT) || input.isKeyPressed(KeyEvent.VK_RIGHT)) {
             int dx = input.isKeyPressed(KeyEvent.VK_LEFT) ? -1 : 1;
-
+            // flags are modified here
             if (dasTimestamp == 0) {
                 dasTimestamp = now;
                 arrTimestamp = now;
@@ -231,7 +274,7 @@ public class Game {
             holdKeyHeld = false;
         }
 
-        // ── UPDATED SOFT DROP (TETR.IO INSTANT WITH LOCK DELAY MATCH) ──
+        // UPDATED SOFT DROP (TETR.IO INSTANT WITH LOCK DELAY MATCH)
         if (input.isKeyPressed(KeyEvent.VK_DOWN)) {
             if (SOFT_DROP_INTERVAL == 0) {
                 boolean shiftedDown = false;
@@ -262,12 +305,13 @@ public class Game {
             if (!rotateKeyHeld) {
                 boolean isCW = input.isKeyPressed(KeyEvent.VK_UP);
                 boolean rotated = isCW ? currentPiece.rotateCW(board) : currentPiece.rotateCCW(board);
-
+                // detecting spin
                 if (rotated) {
                     lastActionWasRotation = true;
                     lastRotationType = isCW? 1 :2;
                     pendingSpin           = detectSpin(currentPiece);
                 }
+                // avoiding burst input
                 rotateKeyHeld = true;
             }
         } else {
@@ -287,6 +331,9 @@ public class Game {
         }
     }
 
+    /**
+     * Moves the current piece down one cell if possible
+     */
     private void dropOneCell() {
         if (currentPiece.tryMove(0, 1, board)) {
             lastFallTime          = System.nanoTime() / 1_000_000;
@@ -295,6 +342,11 @@ public class Game {
         }
     }
 
+    /**
+     * Detects the spin type (none, mini, or full) for the current piece
+     * @param piece the piece to check for spin
+     * @return spin type: SPIN_NONE, SPIN_MINI, or SPIN_FULL
+     */
     int detectSpin(Piece piece) {
         if (!lastActionWasRotation) {
             return SPIN_NONE;
@@ -343,6 +395,7 @@ public class Game {
                     front1 = bl;
                     break;
             }
+            //debug statments, do not remove them because it's really useful
             System.out.printf(
                     "rot=%d TL=%b TR=%b BL=%b BR=%b kick=%d%n",
                     piece.getRotation(),
@@ -369,7 +422,7 @@ public class Game {
                 );
             }
 
-           System.out.println();
+            System.out.println();
             if (filledCorners < 3)
                 return SPIN_NONE;
 
@@ -411,7 +464,12 @@ public class Game {
         return SPIN_NONE;
     }
 
-
+    /**
+     * Checks if a corner position is filled by a block or boundary
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @return true if boundary or occupied cell
+     */
     private boolean isCornerFilled(int x, int y) {
         // Treat boundaries as FILLED (this is the key to T-Spin wall-tucks)
         if (x < 0 || x >= Board.COLS || y < 0 || y >= Board.ROWS) {
@@ -420,15 +478,22 @@ public class Game {
         // Only return true if there is an actual block on the board
         return board.getBoard()[y][x] != 0;
     }
+
+    /**
+     * Swaps current piece with held piece
+     */
     void hold() {
+
         if (holdUsed) return;
         holdUsed = true;
 
         int incoming = currentPiece.getType();
         if (holdType == -1) {
+        //save piece type
             holdType = incoming;
             spawnPiece();
         } else {
+            //swap piece type
             int swapOut = holdType;
             holdType    = incoming;
             currentPiece = new Piece(swapOut);
@@ -437,6 +502,9 @@ public class Game {
         pendingSpin   = SPIN_NONE;
     }
 
+    /**
+     * Instantly drops piece to bottom and locks it
+     */
     void hardDrop() {
         while (currentPiece.tryMove(0, 1, board));
         playSound("hard_drop_fixed.wav");
@@ -446,22 +514,31 @@ public class Game {
         lockPiece();
     }
 
+    /**
+     * Locks the current piece onto the board and spawns next piece
+     */
     void lockPiece() {
         lastSpin = detectSpin(currentPiece);
+        //debug satements
         if      (lastSpin == SPIN_MINI) {System.out.println("\n[!] MINI SPIN (type " + currentPiece.getType() + ")") ;
             board.printBoardDebug();}
         else if (lastSpin == SPIN_FULL) System.out.println("\n[!] FULL SPIN (type " + currentPiece.getType() + ")");
         else                            System.out.println("\n[!] No spin");
-
+        //reset flags don't reset lastSpin
         lastActionWasRotation = false;
         lastRotationType = -1;
         pendingSpin = SPIN_NONE;
-
+        //calls to calculate score
         int linesCleared = board.placePiece(currentPiece);
         calculateScore(linesCleared, lastSpin);
         spawnPiece();
     }
 
+    /**
+     * Calculates and adds score for line clears and spins
+     * @param lines number of lines cleared
+     * @param spin spin type applied (none, mini, or full)
+     */
     private void calculateScore(int lines, int spin) {
         boolean isSpecialClear = (lines == 4) || (spin != SPIN_NONE && lines > 0);
 
@@ -472,7 +549,7 @@ public class Game {
             return;
         }
         if (spin != SPIN_NONE) {
-            playSound("clearspin_fixed.wav");  // T-spin/S-spin/Z-spin clear
+            playSound("clearspin_fixed.wav");  // spin clear
         } else if (lines == 4) {
             playSound("clearquad_fixed.wav");  // Tetris (4-line clear)
         } else {
@@ -522,6 +599,9 @@ public class Game {
                 lines, spin, wasBackToBack, combo, score, level);
     }
 
+    /**
+     * Spawns a new piece at the top of the board
+     */
     void spawnPiece() {
         lockResetCount = 0;
         holdUsed       = false;
@@ -530,6 +610,9 @@ public class Game {
         if (board.isCollision(currentPiece)) isRunning = false;
     }
 
+    /**
+     * Applies gravity to current piece and manages lock delay
+     */
     void applyGravity() {
         long now = System.nanoTime() / 1_000_000;
         if (now - lastFallTime < GRAVITY_INTERVAL) return;
@@ -553,6 +636,9 @@ public class Game {
         }
     }
 
+    /**
+     * Main game update loop called every frame
+     */
     void update() {
         if (!isRunning) resetGame();
         handleInput();

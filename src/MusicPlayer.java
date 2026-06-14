@@ -6,21 +6,30 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.sound.sampled.*;
-//made by Junjit Chang
 // plays the background music
+//made by Junjit Chang
 // https://www.geeksforgeeks.org/java/play-audio-file-using-java/
+/**
+ * Manages background music playback, including playlist discovery,
+ * sequential looping, and volume control using the Java Sound API.
+ */
 public class MusicPlayer {
 
     private int songnum = 0;
     private Clip currentClip;
     private List<String> playlist;
 
+    /**
+     * Initializes the MusicPlayer and automatically populates the playlist
+     * from the "songs" directory.
+     */
     public MusicPlayer() {
-        // Initialize the playlist immediately when the object is created
         this.playlist = getList();
     }
 
-
+    /**
+     * Begins playback of the current playlist.
+     */
     public void start() {
         if (playlist != null && !playlist.isEmpty()) {
             playPlaylist(playlist);
@@ -29,6 +38,10 @@ public class MusicPlayer {
         }
     }
 
+    /**
+     * Scans the local "songs" directory for .wav files.
+     * @return A List of filenames found in the directory.
+     */
     public List<String> getList() {
         Path folderPath = Paths.get("songs");
         if (!Files.exists(folderPath)) return List.of();
@@ -44,6 +57,10 @@ public class MusicPlayer {
         }
     }
 
+    /**
+     * Plays the specified list of songs, handling playback state and recursion.
+     * @param songs The list of filenames to be played.
+     */
     public synchronized void playPlaylist(List<String> songs) {
         if (songs == null || songs.isEmpty()) return;
 
@@ -52,22 +69,13 @@ public class MusicPlayer {
         String fileName = songs.get(songnum);
         File musicFile = new File("songs/" + fileName);
 
-        // We don't use try-with-resources on AudioInputStream here because
-        // the Clip needs the stream to remain open until it's done playing.
         try {
-            //Get the stream
             AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicFile);
-
-            // Initialize the clip FIRST
             currentClip = AudioSystem.getClip();
-
-            // Open the clip with the stream
             currentClip.open(audioInput);
 
-            // Apply volume (Now that the clip is open, controls are available)
             updateVolume(Options.getVolume());
 
-            // Setup listener and start
             currentClip.addLineListener(event -> {
                 if (event.getType() == LineEvent.Type.STOP) {
                     if (currentClip.getMicrosecondPosition() >= currentClip.getMicrosecondLength()) {
@@ -85,6 +93,9 @@ public class MusicPlayer {
         }
     }
 
+    /**
+     * Safely halts and releases resources for the currently active clip.
+     */
     public void stopAndCloseCurrentClip() {
         if (currentClip != null) {
             currentClip.stop();
@@ -93,23 +104,26 @@ public class MusicPlayer {
         }
     }
 
-    // method to skip to the next song manually
+    /**
+     * Manually advances playback to the next song in the playlist.
+     */
     public void next() {
         if (playlist != null && !playlist.isEmpty()) {
             songnum = (songnum + 1) % playlist.size();
             playPlaylist(playlist);
         }
     }
+
+    /**
+     * Adjusts the gain of the current clip.
+     * @param volumePercent Integer from 0 to 100 representing desired volume.
+     */
     public void updateVolume(int volumePercent) {
         if (currentClip != null && currentClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
             FloatControl gainControl = (FloatControl) currentClip.getControl(FloatControl.Type.MASTER_GAIN);
-
-            // Convert 0-100 to Decibels (-80.0 to 6.0206)
-            // Note: 0% volume is usually silent, -80dB is the standard floor for Java Clips
             float min = gainControl.getMinimum();
             float max = gainControl.getMaximum();
             float volume = min + (max - min) * (volumePercent / 100.0f);
-
             gainControl.setValue(volume);
         }
     }
