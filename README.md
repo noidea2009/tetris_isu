@@ -1,6 +1,6 @@
 # Tetris_ISU
 ## Purpose
-To create a viable tetris clone in order to complete the ISC3U culminating assingment, and to entertain myself when wifi is down. 
+To create a viable tetris clone in order to complete the ICS3U culminating assingment, and to entertain myself when wifi is down. 
 
 ## Caution
 1. Sound files are not included here
