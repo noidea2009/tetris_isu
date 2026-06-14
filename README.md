@@ -2,6 +2,13 @@
 ## Purpose
 To create a viable tetris clone in order to complete the ICS3U culminating assingment, and to entertain myself when wifi is down. 
 
+## Usage
+Clone the repository(read Section: Caution)
+
+Download the release
+
+Run the code on an IDE
+
 ## Caution
 1. Sound files are not included here
 2. Music files are not included here
