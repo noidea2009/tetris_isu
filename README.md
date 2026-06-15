@@ -5,7 +5,7 @@ To create a viable tetris clone in order to complete the ICS3U culminating assin
 ## About
 made by me
 
-contact me at something@mail.com
+contact me at something@mail.com (fake email)
 
 ## Usage
 Clone the repository(read Section: Caution)
