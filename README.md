@@ -2,6 +2,11 @@
 ## Purpose
 To create a viable tetris clone in order to complete the ICS3U culminating assingment, and to entertain myself when wifi is down. 
 
+## About
+made by me
+
+contact me at something@mail.com
+
 ## Usage
 Clone the repository(read Section: Caution)
 
