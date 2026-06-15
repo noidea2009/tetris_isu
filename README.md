@@ -22,6 +22,7 @@ down: soft drop
 
 space: hard drop
 
+esc: exit game
 
 
 ## Caution
