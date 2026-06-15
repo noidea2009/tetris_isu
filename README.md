@@ -22,9 +22,10 @@ Run the code on an IDE
 
 ## Current Issues
 1. slow loading time into game
-2. audio mismatch and latency
-3. Odd behaviour when DAS = 0ms
-4. unexpected drift(block drfits to the oppsite direction of input)
+2. Inaccurate spin detection
+3. audio mismatch and latency
+4. Odd behaviour when DAS = 0ms
+5. unexpected drift(block drfits to the oppsite direction of input)
 > Issue 4 might be a skill issue, if it persists even under slower DAS & ARR, please tell me.
 
 ## Guides
