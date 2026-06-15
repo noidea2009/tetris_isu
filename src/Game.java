@@ -423,26 +423,26 @@ public class Game {
             }
 
             System.out.println();
-            if (filledCorners < 3)
-                return SPIN_NONE;
+            if (filledCorners >= 3) {
 
-            if (!(front0 && front1) && piece.getLastUsedKickIndex() == 0) {
+                if (front0 && front1)
+                    return SPIN_FULL;
+
+                if (piece.getLastUsedKickIndex() == 4)
+                    return SPIN_FULL;
+
+                if (piece.getLastUsedKickIndex() > 0)
+                    return SPIN_MINI;
+
                 return SPIN_NONE;
             }
-            // Both front corners occupied = proper T-Spin
-            if (front0 && front1) {
-                playSound("spin_fixed.wav");
-                return SPIN_FULL;
+
+// Special kicked mini case
+            if (filledCorners == 2 && piece.getLastUsedKickIndex() > 0) {
+                return SPIN_MINI;
             }
 
-            // Mini upgraded by fifth kick
-            if (piece.getLastUsedKickIndex() == 4) {
-                playSound("spin_fixed.wav");
-                return SPIN_FULL;
-            }
-            playSound("spin_fixed.wav");
-            return SPIN_MINI;
-        }
+            return SPIN_NONE;}
 
         // All-Mini for non-T pieces
         int px = piece.getX();
