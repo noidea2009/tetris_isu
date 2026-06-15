@@ -8,6 +8,20 @@ Clone the repository(read Section: Caution)
 Download the release
 
 Run the code on an IDE
+##Usage
+left, right arrows: move left or move right
+
+up: rotate clockwise
+
+z: rotate counter clockwise
+
+a: rotate 180
+
+down: soft drop
+
+space: hard drop
+
+
 
 ## Caution
 1. Sound files are not included here
