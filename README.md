@@ -8,7 +8,7 @@ Clone the repository(read Section: Caution)
 Download the release
 
 Run the code on an IDE
-##Usage
+##Controls
 left, right arrows: move left or move right
 
 up: rotate clockwise
