@@ -30,8 +30,8 @@ esc: exit game
 
 
 ## Caution
-1. Sound files are not included here
-2. Music files are not included here
+1. Sound files are not included here (included in releases)
+2. Music files are not included here (included in releases)
 >add them by using the guide below
 
 ## Core Features
